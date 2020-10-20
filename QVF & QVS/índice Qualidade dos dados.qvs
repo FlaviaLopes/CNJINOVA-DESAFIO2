@@ -1,0 +1,118 @@
+SET vCaminhoQvd = cnj_transform (soeva_wederson);
+
+SET vCaminhoArquivos = arquivo_cnj (soeva_wederson);
+
+TabDadosBasicos:
+LOAD	distinct
+    HorarioIndexacaoDataJUD,
+    DataIndexacaoDataJUD,
+    SiglaTribunal,
+    TipoTribunal,
+    //SiglaGrau,
+    SiglaGrau,
+    Grau,
+    //ValorCausa,
+    //TamanhoProcesso,
+    NumeroProcesso	as	%LinkTipoErro,
+    NumeroProcesso as %LinkFlagProcesso,
+    NumeroProcesso,
+    CodClasseProcessual,
+    ClasseProcessual,
+    //ClasseProcessualSigla,
+    //QtdAssuntos,
+    NivelSigiloProcesso,
+    //CodCompetencia,
+    TipoSistemaUtilizado,
+    SistemaUtilizado,
+    //DataAjuizamento,
+    CodMunicipioUnidadeOrigem,
+    UnidadeJudiciaria,
+    //CodMunicipioUnidadeJulgadora,
+    CodUnidadeJudiciaria,
+    SiglaInstancia,
+    //InstanciaOrgaoJulgadora,
+    NomeArquivo,
+    %Link
+FROM [lib://$(vCaminhoQvd)/TabPerson.qvd]
+(qvd);
+
+LEFT KEEP(TabDadosBasicos)
+TabOrgao:
+LOAD
+	*
+WHERE
+	LocalizacaoVara <> '[607162856,1050182067]'
+    //Exclusão dessa vara pela localização extremamente erronea
+;
+LOAD
+    SEQ_ORGAO	AS	CodUnidadeJudiciaria,
+    NOMEDAVARA	AS	NomeVara,
+    GeoMakePoint(replace(LATITUDE,'.',','),replace(LONGITUDE,'.',','))	as	LocalizacaoVara,
+    SEQ_ORGAO_PAI,
+    TIP_ORGAO,
+    SEQ_CIDADE,
+    DSC_CIDADE,
+    SIG_UF,
+    COD_IBGE,
+    DSC_TIP_ORGAO,
+    TIP_ESFERA_JUSTICA,
+    INT_ORDEM_ORGAO,
+    DSC_ORGAO,
+    DSC_DENOM_SERVENTIA_JUDICIAL,
+    endereco_serventia,
+    cep_serventia,
+    LATITUDE,
+    LONGITUDE
+FROM [lib://$(vCaminhoArquivos)/mpm_serventias.csv]
+(txt, utf8, embedded labels, delimiter is ';', msq);
+
+
+
+TabFlagProcessos:
+LOAD
+    %LinkFlagProcesso,
+    FlagTipoSistemaUtilizadoFaltante,
+    FlagProcessoNumeroErrado,
+    FlagProcessoDuplicado,
+    FlagProcessoDesarqMaiorArq,
+	FlagCompetenciaFaltante
+FROM [lib://$(vCaminhoQvd)/TabFlagsProcesso.qvd]
+(qvd);
+
+LEFT KEEP(TabDadosBasicos)
+TabEsperadoPorTribunal:
+LOAD
+    SiglaTribunal,
+    Esperado	as	ValorEsperado
+FROM [lib://arquivo_cnj (soeva_wederson)/Esperado por tribunal.xlsx]
+(ooxml, embedded labels, table is Sheet1);
+
+TabTipoProblema:
+LOAD
+    %LinkTipoErro,
+    TipoErro
+FROM [lib://$(vCaminhoQvd)/TabTipoProblema.qvd]
+(qvd);
+
+TabAssunto:
+LOAD
+    %Link,
+    FlagAssuntoPrincipal,
+    AssuntoNacional,
+    CodigoAssuntoNacional,
+    CodAssuntoLocal,
+    AssuntoLocal,
+    NomeArquivoVinculado
+FROM 
+	[lib://$(vCaminhoQvd)/TabAssunto.qvd]
+(qvd);
+
+TabDataIndexacao:
+LOAD	DISTINCT
+	DataIndexacaoDataJUD,
+    MonthName(DataIndexacaoDataJUD)	AS	MesAno,
+    year(DataIndexacaoDataJUD)		AS	Ano,
+    Month(DataIndexacaoDataJUD)		AS	Mês
+RESIDENT
+	TabDadosBasicos
+;
