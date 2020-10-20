@@ -1,0 +1,99 @@
+//Pasta root onde os arquivos XML estão.
+//Deve ser a conexão que aponta para a pasta 'xml' do ConversorJsonXml
+set vRoot = 'lib://xml_cnj (soeva_wederson)';
+
+//>Pasta destino dos arquivos QVD's gerados
+set vCaminhoDestino = 'lib://qvd_cnj (soeva_wederson)';
+
+/*
+> loop que itera pelos arquivos disponiveis na pasta definida na variavel vRoot
+>Este loop gerará 3 arquivos QVD para cada arquivo XML encontrado na pasta
+>O primeiro QVD (TabAssunto) vai conter a informação dos assuntos de todos processos presentes no arquivo XML.
+>O segundo QVD ( Person) ira conter os detalhes de todos processos contidos no arquivo XML iterado
+>O terceiro QVD (TabMovimento) ira conter os movimentos contidos no arquivo XML iterado.
+>Foi decidio gerar um QVD para cada arquivo XML por motivos de economia de memória, 
+já que o QlikSense carrega os dados para memória, usando essa estrategia 
+seria levado apenas um arquivo XML por vez, que é descarregado da memória após a geração dos QVD's.
+
+*/
+FOR EACH vFile in  FileList(vRoot&'/*.xml')
+	
+    //Pega o nome de fato do arquivo.
+    LET vFileName = TextBetween('$(vFile)',vRoot&'/','.xml');
+    
+    TRACE $(vFileName);
+    
+    //Gera a tabela de assuntos
+    TabAssunto:
+    LOAD
+        principal,
+        codigoNacional,
+        codigoAssunto,
+        codigoPaiNacional,
+        descricao,
+		%Key_person_A344DE13919617FC
+    FROM
+        [$(vFile)]
+    (XmlSimple, table is [person/person/dadosBasicos/assunto]);
+
+	STORE TabAssunto INTO   [$(vCaminhoDestino)/TabAssunto_$(vFileName).qvd](QVD);
+    DROP TABLE TabAssunto;
+    
+    
+	TabPerson:
+    LOAD
+        millisInsercao,
+        siglaTribunal,
+        grau,
+        "dadosBasicos/valorCausa",
+        "dadosBasicos/tamanhoProcesso",
+        "dadosBasicos/numero",
+        "dadosBasicos/dataAjuizamento",
+        "dadosBasicos/totalAssuntos",
+        "dadosBasicos/classeProcessual",
+        "dadosBasicos/nivelSigilo",
+        "dadosBasicos/competencia",
+        "dadosBasicos/codigoLocalidade",
+		"dadosBasicos/dscSistema",
+		"dadosBasicos/procEl",
+        "dadosBasicos/orgaoJulgador/nomeOrgao",
+        "dadosBasicos/orgaoJulgador/codigoMunicipioIBGE",
+        "dadosBasicos/orgaoJulgador/codigoOrgao",
+        "dadosBasicos/orgaoJulgador/instancia",
+		%Key_person_A344DE13919617FC
+    FROM
+        [$(vFile)]
+    (XmlSimple, table is [person/person]);
+
+	
+
+	STORE TabPerson INTO   [$(vCaminhoDestino)/TabPerson_$(vFileName).qvd](QVD);
+    DROP TABLE TabPerson;
+    
+	//*/
+    
+	TabMovimento:
+    LOAD
+    identificadorMovimento,
+    tipoResponsavelMovimento,
+	tipoDecisao,
+	nivelSigilo,
+	dataHora,
+    "orgaoJulgador/nomeOrgao",
+    "orgaoJulgador/codigoMunicipioIBGE",
+    "orgaoJulgador/codigoOrgao",
+    "orgaoJulgador/instancia",
+	"movimentoLocal/codigoMovimento",
+	"movimentoLocal/codigoPaiNacional",
+	"movimentoNacional/codigoNacional",
+  	%Key_person_A344DE13919617FC
+    FROM
+        [$(vFile)]
+    (XmlSimple, table is [person/person/movimento]);
+
+	STORE TabMovimento INTO   [$(vCaminhoDestino)/TabMovimento_$(vFileName).qvd](QVD);
+    DROP TABLE TabMovimento;
+
+
+NEXT;
+

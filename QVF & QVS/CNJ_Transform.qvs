@@ -1,0 +1,372 @@
+//Variáveis
+
+//Variavel que define como a chave que relaciona os processos com seus movimentos e movimentos
+SET vChaveTabelas = Hash128(%Key_person_A344DE13919617FC,TextBetween(FileName(),'_',''));
+
+
+/*>Define quais arquivos QVD serão carregados para serem trasnformados
+//>Devido a limite de memória (Sim a máquina usada no desenvolvimento era muito ruim) somente os arquivos
+que terminaem em 1 serão transformados (Um subconjunto de aproximadamente 380mil processos com seus 8milhoes de movimentos.
+*/
+SET vTipoProcessoCarregado = *1;
+
+
+
+
+//Deve ser a conexão que aponta para a pasta 'Arquivos De Para utilizados'( disponivel no GIT)
+SET vDiretorioArquivos = $(arquivo_cnj (soeva_wedersona));
+
+
+//>Pasta destino dos arquivos QVD's gerados
+//>Deve ser a mesma escolhida na etapa de extração.
+set vCaminhoOrigemQvd = 'lib://qvd_cnj (soeva_wederson)';
+
+//Conexão da pasta onde os QVD's transformados devem ficar
+set vCamihoDestino = 'cnj_transform (soeva_wederson)';
+
+
+/*
+>Crias as tabelas mapping
+>Onde as tabelas mapping forem aplicadas (apply map) o código será substituido por suas respectivas descrções.
+*/
+
+
+MapAssunto:
+MAPPING
+LOAD	DISTINCT
+    codigo,
+    descricao
+FROM
+	[lib://$(vDiretorioArquivos)/sgt_assuntos.csv](txt, utf8, embedded labels, delimiter is ';', msq)
+WHERE
+	LEN(descricao) >1
+;
+
+MapInstancia:
+MAPPING
+LOAD
+    upper(Cod),
+    Descricao
+FROM [lib://$(vDiretorioArquivos)/DePara_CNJ.xlsx]
+(ooxml, embedded labels, table is Instancia);
+
+
+MapResponsavelMovimento:
+MAPPING
+LOAD
+    Cod,
+    Descricao
+FROM [lib://$(vDiretorioArquivos)/DePara_CNJ.xlsx]
+(ooxml, embedded labels, table is [Responsável Movimento]);
+
+MapNivelSigilo:
+MAPPING
+LOAD
+    Cod,
+    Descricao
+FROM [lib://$(vDiretorioArquivos)/DePara_CNJ.xlsx]
+(ooxml, embedded labels, table is [Nivel Sigilo]);
+
+MapTipoDecisao:
+MAPPING
+LOAD
+    Cod,
+    Descricao
+FROM [lib://$(vDiretorioArquivos)/DePara_CNJ.xlsx]
+(ooxml, embedded labels, table is Decisão);
+
+MapGrau:
+Mapping
+LOAD
+    Cod,
+    Descricao
+FROM [lib://$(vDiretorioArquivos)/DePara_CNJ.xlsx]
+(ooxml, embedded labels, table is Grau);
+
+MapClasseProcessualDescricao:	
+MAPPING
+LOAD
+	codigo,
+    descricao
+FROM
+	[lib://$(vDiretorioArquivos)/sgt_classes.csv]
+(txt, utf8, embedded labels, delimiter is ';', msq);
+
+
+MapClasseProcessualSigla:		
+MAPPING
+LOAD
+	codigo,
+    sigla
+FROM
+	[lib://$(vDiretorioArquivos)/sgt_classes.csv]
+(txt, utf8, embedded labels, delimiter is ';', msq);
+
+MapTipoSistema:
+MAPPING
+LOAD
+    Cod,
+    Descricao
+FROM [lib://$(vDiretorioArquivos)/DePara_CNJ.xlsx]
+(ooxml, embedded labels, table is [Tipo Sistema]);
+
+MapSistemaUtilizado:
+MAPPING
+LOAD
+    Cod,
+    Descricao
+FROM [lib://$(vDiretorioArquivos)/DePara_CNJ.xlsx]
+(ooxml, embedded labels, table is [Tipo Sistema Eletrônico]);
+
+
+/*
+
+Transformação da tabela person, gerando um QVD unico com os detalhes de todos procesos
+
+
+*/
+
+TabPerson:
+LOAD
+//    millisInsercao,
+    time(frac(MakeDate(1970) +		round(millisInsercao/1000)/(60*60*24)))	AS	HorarioIndexacaoDataJUD,
+    date(floor(MakeDate(1970) +round(millisInsercao/1000)/(60*60*24)))		AS	DataIndexacaoDataJUD,
+    upper(siglaTribunal)	AS	SiglaTribunal,
+    
+    //Cria um tipo de tribunal através de sua Sigla
+    PICK(WildMatch(LEFT(UPPER(siglaTribunal),3),
+	'TRT','TRF','TRE','TJM','TJ*','STJ','TST','TSE','STM'),
+	'Regionais Do Trabalho','Regionais Federais','Regionais Eleitorais','Justiça Militar','Justiça Dos Estados','STJ','TST','TSE','STM')
+    as TipoTribunal,
+    
+    upper(grau)				AS	SiglaGrau,
+	ApplyMap('MapGrau',upper(grau),'Não Localizado')	AS	Grau,
+    alt("dadosBasicos/valorCausa",0)					AS	ValorCausa,
+    alt("dadosBasicos/tamanhoProcesso",'Não Informado')	AS	TamanhoProcesso,
+    "dadosBasicos/numero"								AS	NumeroProcesso,
+    "dadosBasicos/classeProcessual"	AS	CodClasseProcessual,
+    ApplyMap('MapClasseProcessualDescricao',"dadosBasicos/classeProcessual",'Não Localizado')	AS	ClasseProcessual,
+    ApplyMap('MapClasseProcessualSigla',"dadosBasicos/classeProcessual",'Não Localizado')		AS	ClasseProcessualSigla,
+    
+    "dadosBasicos/totalAssuntos"	AS	QtdAssuntos,
+    "dadosBasicos/nivelSigilo"		AS	NivelSigiloProcesso,
+    "dadosBasicos/competencia"		AS	CodCompetencia,
+
+    ApplyMap('MapTipoSistema',"dadosBasicos/procEl",'Não Localizado')			AS	TipoSistemaUtilizado,
+    ApplyMap('MapSistemaUtilizado',"dadosBasicos/dscSistema",'Não Localizado')	AS	SistemaUtilizado,
+   
+    
+    "dadosBasicos/dataAjuizamento"	AS	DataAjuizamento,
+    
+    "dadosBasicos/codigoLocalidade"						AS	CodMunicipioUnidadeOrigem,
+    "dadosBasicos/orgaoJulgador/nomeOrgao"				AS	UnidadeJudiciaria,
+    "dadosBasicos/orgaoJulgador/codigoMunicipioIBGE"	AS	CodMunicipioUnidadeJulgadora,
+    "dadosBasicos/orgaoJulgador/codigoOrgao"			AS	CodUnidadeJudiciaria,
+    "dadosBasicos/orgaoJulgador/instancia"				AS	SiglaInstancia,
+    ApplyMap('MapInstancia',upper("dadosBasicos/orgaoJulgador/instancia"),'Não Localizado')	AS	InstanciaOrgaoJulgadora,
+    FileName()	AS	NomeArquivo,
+    $(vChaveTabelas)	AS	%Link
+FROM [$(vCaminhoOrigemQvd)/TabPerson_$(vTipoProcessoCarregado).qvd]
+(qvd);
+
+STORE	TabPerson	INTO [LIB://$(vCamihoDestino)/TabPerson.qvd](QVD);
+DROP TABLE TabPerson;
+
+/*
+
+Transformação da tabela de movimento, gerando um QVD unico para todos movimentos de todos processos
+*/
+
+
+TabMovimento:
+LOAD
+    identificadorMovimento,
+    nivelSigilo	AS	CodNivelSigilo,
+    tipoDecisao	AS	CodTipoDecisao,
+	tipoResponsavelMovimento	AS	CodResponsávelMovimento,
+    
+    "orgaoJulgador/nomeOrgao"				AS	UnidadeJudiciariaMovimento,
+    "orgaoJulgador/codigoMunicipioIBGE"		AS	CodMunicipioUnidadeJulgadoraMovimento,
+    "orgaoJulgador/codigoOrgao"				AS	CodUnidadeJudiciariaMovimento,
+    "orgaoJulgador/instancia"				AS	SiglaInstanciaMovimento,
+    ApplyMap('MapInstancia',upper("orgaoJulgador/instancia"),'Não Localizado')	AS	InstanciaOrgaoJulgadoraMovimento,
+    
+    $(vChaveTabelas)		AS	%Link,
+    ApplyMap('MapNivelSigilo',nivelSigilo,'Não Localizado')	AS	NivelSigilo,
+
+	date(floor(TimesTamp#(dataHora,'YYYYMMDDhhmmss')))		AS	DataMovimentacao,
+	time(frac(TimesTamp#(dataHora,'YYYYMMDDhhmmss')))		AS	HorarioMovimentacao,
+    
+    ApplyMap('MapTipoDecisao',tipoDecisao,'Não Localizado')	AS	TipoDecisao,
+    ApplyMap('MapResponsavelMovimento',tipoResponsavelMovimento,'Não Localizado')		AS	ResponsávelMovimento,
+    
+   	ApplyMap('MapAssunto',"movimentoNacional/codigoNacional",
+    ApplyMap('MapAssunto',"movimentoLocal/codigoPaiNacional",'Codigo nao localizado'))	AS	AssuntoNacional,
+    
+    IF(isnull("movimentoNacional/codigoNacional") or "movimentoNacional/codigoNacional"='',"movimentoLocal/codigoPaiNacional","movimentoNacional/codigoNacional")	AS	CodigoAssuntoNacional
+FROM
+	[$(vCaminhoOrigemQvd)/TabMovimento_$(vTipoProcessoCarregado).qvd]
+(qvd);
+
+
+STORE	TabMovimento	INTO [LIB://$(vCamihoDestino)/TabMovimento.qvd](QVD);
+DROP TABLE TabMovimento;
+
+
+/*
+
+Transformação da tabela de assuntos, gerando um QVD unico para todos assuntos de todos processos
+*/
+
+TabAssunto:
+LOAD	
+    IF(principal='true',true(),
+    IF(principal='false',false(),
+    'Ñ Informado'))	AS	FlagAssuntoPrincipal,
+    ApplyMap('MapAssunto',codigoNacional,
+    ApplyMap('MapAssunto',codigoPaiNacional,'Codigo nao localizado'))					AS	AssuntoNacional,
+    IF(isnull(codigoNacional) or codigoNacional='',codigoPaiNacional,codigoNacional)	AS	CodigoAssuntoNacional,
+    codigoAssunto	AS	CodAssuntoLocal,
+    descricao		AS	AssuntoLocal,
+    FileName()		AS	NomeArquivoVinculado,
+    $(vChaveTabelas)	AS	%Link
+FROM [$(vCaminhoOrigemQvd)/TabAssunto_$(vTipoProcessoCarregado).qvd]
+(qvd);
+
+STORE	TabAssunto	INTO [LIB://$(vCamihoDestino)/TabAssunto.qvd](QVD);
+DROP TABLE TabAssunto;
+
+/*
+Essa parte da transformação consiste em marcar todos processos que possuem algum tipo de problema
+Criando uma 'flag' para cada tipo, e criando um valor para a dimensão 'tipo de problema'
+
+
+
+*/
+
+
+
+//Map criado para inserir o número do processo na tabela de movimento, para que seja possível agregar as métricas por processo
+MapLinkNumeroProcesso:
+MAPPING
+LOAD	distinct
+    %Link,
+    NumeroProcesso
+FROM
+	[lib://$(vCamihoDestino)/TabPerson.qvd]
+(qvd);
+
+
+tempTabMovimentos:
+LOAD
+	NumeroProcesso
+	,DataMovimentacao
+	,HorarioMovimentacao
+    ,CodigoAssuntoNacional
+    ,num(mid(NumeroProcesso,10,4))	AS	AnoNumeroProcesso	//Cria um campo com o ano contido no número do processo
+	,SUM(Movimentos)				AS	QtdMovimentosIguais //Soma a quantidade de movimentos para um mesmo processo, data, horario e código de assunto
+GROUP BY
+	NumeroProcesso
+	,DataMovimentacao
+	,HorarioMovimentacao
+    ,CodigoAssuntoNacional
+;
+LOAD
+	ApplyMap('MapLinkNumeroProcesso',%Link,null())	AS	NumeroProcesso,
+    DataMovimentacao,
+    HorarioMovimentacao,
+    CodigoAssuntoNacional,
+    1	AS	Movimentos
+FROM 
+	[lib://$(vCamihoDestino)/TabMovimento.qvd](qvd)
+;
+
+/*
+>Map que identifica se um processo possui movimentos duplicados
+>Caso um processo possua mais de um movimento (QtdMovimentosIguais) com o mesmo horario, mesma data, e mesmo código nacional,
+ele é considerado um movimento duplicado;
+>Movimentos com horario zerado foram desconsiderados dessa análise
+>Movimentos do tipo '11010 - Mero expediente' foram desconsiderados por serem muito comuns.
+//*/
+MapProcessoDuplicados:	MAPPING	LOAD	DISTINCT	NumeroProcesso,    1	RESIDENT	tempTabMovimentos
+WHERE	QtdMovimentosIguais >1 and HorarioMovimentacao<>0 AND Not Match(CodigoAssuntoNacional,11010);
+
+
+/*
+>Map que identifica se um processo possui o ano contido no seu número errado
+>É considerado um ano 'errado' se ele for maior que 2020 ou menor que 1960.
+//*/
+MapProcessoAnoErrado:	MAPPING	LOAD	DISTINCT	NumeroProcesso,    1	RESIDENT	tempTabMovimentos	
+WHERE	AnoNumeroProcesso > 2020 or AnoNumeroProcesso < 1960;
+
+/*
+>Map que define se o processo tem mais desarquivamentos que arquivamentos.
+
+*/
+MapProcessoDesarqMaiorArq:
+Mapping
+LOAD
+	NumeroProcesso,
+    1
+WHERE
+	QtdDesarquivamentos > QtdArquivamentos
+;
+LOAD
+	NumeroProcesso,
+    sum(QtdDesarquivamentos)	as 	QtdDesarquivamentos,
+    sum(QtdArquivamentos)		as	QtdArquivamentos
+GROUP BY
+	NumeroProcesso
+;
+LOAD
+	NumeroProcesso,
+    CodigoAssuntoNacional,
+    sum(IF(CodigoAssuntoNacional=893,1,0))	AS	QtdDesarquivamentos,//marca os processos de desarquivamento
+    sum(IF(Match(CodigoAssuntoNacional,228,861,12430),1,0))	AS	QtdArquivamentos//marca os processos com movimentos de arquivamentos
+RESIDENT	
+	tempTabMovimentos
+WHERE
+	Match(CodigoAssuntoNacional,893,228,861,12430)
+GROUP BY
+	NumeroProcesso,
+    CodigoAssuntoNacional
+;
+
+DROP TABLE tempTabMovimentos;
+
+
+//Map que marca os processos que possuem o campo 'TipoSistemaUtilizado' com a informação 'não localizado'
+MapProcessoTipoSistemaNaoLocalizado:	MAPPING	LOAD	DISTINCT	NumeroProcesso,    1	FROM	[lib://$(vCamihoDestino)/TabPerson.qvd](qvd)
+WHERE	TipoSistemaUtilizado = 'Não Localizado';
+
+//Map que marca os processos que possuem o campo 'Cod Competencia' com uma informação diferente de um número.
+MapProcessoCompetenciaNaoLocalizado:	MAPPING	LOAD	DISTINCT	NumeroProcesso,    1	FROM	[lib://$(vCamihoDestino)/TabPerson.qvd](qvd)
+WHERE	not isnum(CodCompetencia);
+
+//Tabela que guarda as flags dos processos.
+TabFlagsProcesso:
+LOAD	DISTINCT
+	NumeroProcesso	AS	%LinkFlagProcesso,
+    NumeroProcesso,
+    ApplyMap('MapProcessoTipoSistemaNaoLocalizado',NumeroProcesso,0)	AS	FlagTipoSistemaUtilizadoFaltante,
+    ApplyMap('MapProcessoAnoErrado',NumeroProcesso,0)					AS	FlagProcessoNumeroErrado,
+    ApplyMap('MapProcessoDuplicados',NumeroProcesso,0)					AS	FlagProcessoDuplicado,
+    ApplyMap('MapProcessoDesarqMaiorArq',NumeroProcesso,0)				AS	FlagProcessoDesarqMaiorArq,
+    ApplyMap('MapProcessoCompetenciaNaoLocalizado',NumeroProcesso,0)	AS	FlagCompetenciaFaltante
+FROM 
+	[lib://$(vCamihoDestino)/TabPerson.qvd]
+(qvd);
+
+//Tabela que cria a dimensão do tipo de erro
+TabTipoProblema:				LOAD	DISTINCT	NumeroProcesso AS	%LinkTipoErro, 'Sistema Faltantes'		AS	TipoErro	RESIDENT	TabFlagsProcesso	WHERE FlagTipoSistemaUtilizadoFaltante =1 ;
+CONCATENATE(TabTipoProblema)	LOAD	DISTINCT	NumeroProcesso AS	%LinkTipoErro, 'Numero Processo Errado'	AS	TipoErro	RESIDENT	TabFlagsProcesso	WHERE FlagProcessoNumeroErrado =1 ;
+CONCATENATE(TabTipoProblema)	LOAD	DISTINCT	NumeroProcesso AS	%LinkTipoErro, 'Duplicação'				AS	TipoErro	RESIDENT	TabFlagsProcesso	WHERE FlagProcessoDuplicado =1 ;
+CONCATENATE(TabTipoProblema)	LOAD	DISTINCT	NumeroProcesso AS	%LinkTipoErro, 'Desarq > Arq'			AS	TipoErro	RESIDENT	TabFlagsProcesso	WHERE FlagProcessoDesarqMaiorArq =1 ;
+CONCATENATE(TabTipoProblema)	LOAD	DISTINCT	NumeroProcesso AS	%LinkTipoErro, 'Competencia Faltante'	AS	TipoErro	RESIDENT	TabFlagsProcesso	WHERE FlagCompetenciaFaltante =1 ;
+
+
+STORE	TabFlagsProcesso	INTO [LIB://$(vCamihoDestino)/TabFlagsProcesso.qvd](QVD);
+DROP TABLE TabFlagsProcesso;
+
+STORE	TabTipoProblema	INTO [LIB://$(vCamihoDestino)/TabTipoProblema.qvd](QVD);
+DROP TABLE TabTipoProblema;
