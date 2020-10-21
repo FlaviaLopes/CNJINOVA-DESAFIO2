@@ -6,7 +6,7 @@
 
 Todas as informações sobre o projeto podem ser acessadas na [Wiki](https://github.com/FlaviaLopes/CNJINOVA-DESAFIO2/wiki) deste repositório e também estão resumidas abaixo:
 
-1. [Introdução](https://github.com/FlaviaLopes/CNJINOVA-DESAFIO2/wiki/1.-Introdução)
+1. [Introdução, Arquitetura e Fluxo de Dados](https://github.com/FlaviaLopes/CNJINOVA-DESAFIO2/wiki/1.-Introdução)
 2. [Problemática](https://github.com/FlaviaLopes/CNJINOVA-DESAFIO2/wiki/2.-Problemática)
 3. [Nossa proposta](https://github.com/FlaviaLopes/CNJINOVA-DESAFIO2/wiki/3.-Nossa-proposta)
     - 3.1 [Objetivos](https://github.com/FlaviaLopes/CNJINOVA-DESAFIO2/wiki/3.1.-Objetivos)
@@ -29,6 +29,7 @@ URL: https://sense.soeva.com.br/hub/my/work
 Usuario: soeva\cnj
 
 Senha: Rrlx991!@#
+
 
 <!-- ## COMO COLABORAR
 
