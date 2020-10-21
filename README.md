@@ -1,7 +1,30 @@
-# Desafio CNJ Inova 2020 - Maratona
 
-## Desafio 2 - Inconsistência de Dados nos Sistemas dos Tribunais
-> Tema do Desafio: "Como podemos identificar e corrigir no Datajud as inconsistências nos metadados dos processos?"
+
+# Desafio CNJ Inova 2020 - Time 15
+
+## WIKI
+
+Todas as informações sobre o projeto podem ser acessadas na [Wiki](https://github.com/FlaviaLopes/CNJINOVA-DESAFIO2/wiki) deste repositório e também estão resumidas abaixo:
+
+1. [Introdução](https://github.com/FlaviaLopes/CNJINOVA-DESAFIO2/wiki/1.-Introdução)
+2. [Problemática](https://github.com/FlaviaLopes/CNJINOVA-DESAFIO2/wiki/2.-Problemática)
+3. [Nossa proposta](https://github.com/FlaviaLopes/CNJINOVA-DESAFIO2/wiki/3.-Nossa-proposta)
+3.1. [Objetivos](https://github.com/FlaviaLopes/CNJINOVA-DESAFIO2/wiki/3.1.-Objetivos)
+3.2 [Metodologia](https://github.com/FlaviaLopes/CNJINOVA-DESAFIO2/wiki/3.2-Metodologia)
+4. [Ferramentas, Tecnologias e Licenças](https://github.com/FlaviaLopes/CNJINOVA-DESAFIO2/wiki/4.-Ferramentas,-Tecnologias-e-Licenças)
+4.1 [Modelo DICCA](https://github.com/FlaviaLopes/CNJINOVA-DESAFIO2/wiki/4.1-Modelo-DICCA)
+4.2 [Qlik Sense](https://github.com/FlaviaLopes/CNJINOVA-DESAFIO2/wiki/4.2-Qlik-Sense)
+5. pInstruções de Uso](https://github.com/FlaviaLopes/CNJINOVA-DESAFIO2/wiki/5.-Instruções-de-Uso)
+6. [Equipe](https://github.com/FlaviaLopes/CNJINOVA-DESAFIO2/wiki/6.-Equipe)
+7. [Referências](https://github.com/FlaviaLopes/CNJINOVA-DESAFIO2/wiki/7.-Referências)
+
+
+
+## COMO COLABORAR
+
+Instruções sobre como colaborar com este projeto.
+<!-- ## Desafio 2 - Inconsistência de Dados nos Sistemas dos Tribunais
+> Tema do Desafio: "Como podemos identificar e corrigir no Datajud as inconsistências nos metadados dos processos?" -->
 
 ### Instruções
 
