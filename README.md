@@ -20,11 +20,21 @@ Todas as informações sobre o projeto podem ser acessadas na [Wiki](https://git
 
 
 
-## COMO COLABORAR
+## TESTE A SOLUÇÃO
+
+Acesso do ambiente Cloud:
+
+URL: https://sense.soeva.com.br/hub/my/work
+
+Usuario: soeva\cnj
+
+Senha: Rrlx991!@#
+
+<!-- ## COMO COLABORAR
 
 Instruções sobre como colaborar com este projeto.
-<!-- ## Desafio 2 - Inconsistência de Dados nos Sistemas dos Tribunais
-> Tema do Desafio: "Como podemos identificar e corrigir no Datajud as inconsistências nos metadados dos processos?" -->
+## Desafio 2 - Inconsistência de Dados nos Sistemas dos Tribunais
+> Tema do Desafio: "Como podemos identificar e corrigir no Datajud as inconsistências nos metadados dos processos?" 
 
 ### Instruções
 
@@ -92,3 +102,4 @@ Se estiver tudo pronto apenas envie para o repositório remoto:
 Este comando enviará o que você, no repositório local, acabou de comitar no ramo 'dev' para o ramo 'dev' que está no repositório do github.
 
 
+ -->
