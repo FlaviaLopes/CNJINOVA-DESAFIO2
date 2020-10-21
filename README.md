@@ -9,7 +9,7 @@ Todas as informações sobre o projeto podem ser acessadas na [Wiki](https://git
 1. [Introdução](https://github.com/FlaviaLopes/CNJINOVA-DESAFIO2/wiki/1.-Introdução)
 2. [Problemática](https://github.com/FlaviaLopes/CNJINOVA-DESAFIO2/wiki/2.-Problemática)
 3. [Nossa proposta](https://github.com/FlaviaLopes/CNJINOVA-DESAFIO2/wiki/3.-Nossa-proposta)
-    - 3.1[Objetivos](https://github.com/FlaviaLopes/CNJINOVA-DESAFIO2/wiki/3.1.-Objetivos)
+    - 3.1 [Objetivos](https://github.com/FlaviaLopes/CNJINOVA-DESAFIO2/wiki/3.1.-Objetivos)
     - 3.2 [Metodologia](https://github.com/FlaviaLopes/CNJINOVA-DESAFIO2/wiki/3.2-Metodologia)
 4. [Ferramentas, Tecnologias e Licenças](https://github.com/FlaviaLopes/CNJINOVA-DESAFIO2/wiki/4.-Ferramentas,-Tecnologias-e-Licenças)
    - 4.1 [Modelo DICCA](https://github.com/FlaviaLopes/CNJINOVA-DESAFIO2/wiki/4.1-Modelo-DICCA)
