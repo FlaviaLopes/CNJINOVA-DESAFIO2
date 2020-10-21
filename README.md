@@ -20,7 +20,7 @@ Todas as informações sobre o projeto podem ser acessadas na [Wiki](https://git
 
 
 
-## TESTE A SOLUÇÃO
+## UTILIZE A SOLUÇÃO
 
 Acesso do ambiente Cloud:
 
